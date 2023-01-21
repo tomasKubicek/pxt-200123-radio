@@ -1,14 +1,6 @@
 namespace Utility {
-    /*
-    export enum Enum {
-        //% block="comment"
-        M1 = 0x3,
-    }
-    */
-
-    /**
-     * Get encoded serial number
-    */
+    
+    //Get encoded serial number
     //% blockId=encode_serial block="Get encoded serial number"
     export function encodeSerial(serialNumber?: number): string {
         const ofset = 48;

@@ -10,7 +10,10 @@
     "files": [
         "main.ts",
         "README.md",
-        "serialencoder.ts"
+        "serialencoder.ts",
+        "Sender.ts",
+        "Beacon.ts",
+        "CodeData.ts"
     ],
     "testFiles": [
         "test.ts"
