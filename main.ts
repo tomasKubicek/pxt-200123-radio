@@ -3,20 +3,21 @@ Tlačítkem B nastav, jestli bude microbit beacon (vysílač) nebo normal (přij
 Normal - Tlačítkem A pošli signál s kódem, Tlačítkem B se vrať o krok zpět - k minulému kódu - kdyby byl kód zfalšovaný
 Beacon - reaguje na kód a posílá nové grp a codeArchive
 */
-
 type Data = { code: number, grp?: number }
 function ngr(code: number, grp: number): Data { return { code, grp }; }
-
-radio.setTransmitPower(5)
-radio.setFrequencyBand(7)
-radio.setTransmitSerialNumber(true)
-radio.setGroup(1)
 
 let beacon = false
 let beaconSet = false
 
 const mySerial = Utility.encodeSerial(control.deviceSerialNumber())
-console.log(mySerial)
+SetUp();
+
+function SetUp(){
+    radio.setTransmitPower(5);
+    radio.setFrequencyBand(7);
+    radio.setTransmitSerialNumber(true);
+    radio.setGroup(1);
+}
 
 //Switcher Beacon/Normal - jen pro testing - poté smazat a spustit pouze NormalSender()
 input.onButtonPressed(Button.AB, () => {
@@ -29,6 +30,7 @@ input.onButtonPressed(Button.AB, () => {
 })
 
 input.onButtonPressed(Button.B, () => {
+    if (beaconSet) return;
     beacon = !beacon
     beacon ? basic.showString("B", 20) : basic.showString("N", 20)
     basic.clearScreen()
@@ -52,16 +54,16 @@ function NormalSender() {
     let jumpNext = false
     let confirmed = false;
 
+    input.onButtonPressed(Button.AB, () => { confirmed = false; basic.clearScreen(); })
+
     input.onButtonPressed(Button.A, () => {
-        if (beacon) return;
-        confirmed = false;
+        if (confirmed) { confirmed = false; basic.clearScreen(); return;}
         Send(nextCode);
-        /**/
     })
 
     input.onButtonPressed(Button.B, () => {
         if (!confirmed) {
-            basic.showIcon(IconNames.Duck);
+            DisplayQuestionMark();
             confirmed = true;
             return;
         }
@@ -108,6 +110,13 @@ function NormalSender() {
     })
 }
 
+function DisplayQuestionMark(){ basic.showLeds(`
+            . # # # .
+            . # . # .
+            . . . # .
+            . . # . .
+            . . # . .`);
+}
 
 //Beacon 
 function BeaconSender() {
@@ -116,21 +125,8 @@ function BeaconSender() {
     console.logValue("Serial number", mySerial + "\n\r")
 
     radio.onReceivedNumber((recNum: number) => {
-        if (recNum == groupCodes[currentCode].code) {
-            currentCode++
-            if (currentCode == groupCodes.length) {
-                radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), 0)
-            } else {
-                radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), groupCodes[currentCode].code)
-                radio.sendValue("grp", groupCodes[currentCode].grp)
-                basic.showString("T", 200)
-                basic.clearScreen()
-                radio.setGroup(groupCodes[currentCode].grp)
-            }
-        } else {
-            basic.showString("F", 200)
-            basic.clearScreen()
-        }
+        if (recNum == groupCodes[currentCode].code) { currentCode++; BeaconSend(groupCodes, currentCode); } 
+        else { basic.showString("F", 200); basic.clearScreen(); }
     })
 
     basic.forever(function () {
@@ -139,4 +135,16 @@ function BeaconSender() {
         radio.sendValue("grp", 99);
         radio.sendNumber(7);
     })
+}
+
+function BeaconSend(groupCodes: Data[], currentCode : number){
+    if (currentCode == groupCodes.length) {
+        radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), 0)
+    } else {
+        radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), groupCodes[currentCode].code)
+        radio.sendValue("grp", groupCodes[currentCode].grp)
+        basic.showString("T", 200)
+        basic.clearScreen()
+        radio.setGroup(groupCodes[currentCode].grp)
+    }
 }
