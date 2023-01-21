@@ -1,15 +1,11 @@
 /*
 Tlačítkem B nastav, jestli bude microbit beacon (vysílač) nebo normal (přijmač), tlačítkem AB potvď
-
 Normal - Tlačítkem A pošli signál s kódem, Tlačítkem B se vrať o krok zpět - k minulému kódu - kdyby byl kód zfalšovaný
-
 Beacon - reaguje na kód a posílá nové grp a codeArchive
 */
 
-interface codeArchive {
-    code?: number,
-    grp?: number
-}
+type Data = { code: number, grp?: number }
+function ngr(code: number, grp: number): Data { return { code, grp }; }
 
 radio.setTransmitPower(5)
 radio.setFrequencyBand(7)
@@ -24,12 +20,11 @@ console.log(mySerial)
 
 //Switcher Beacon/Normal - jen pro testing - poté smazat a spustit pouze NormalSender()
 input.onButtonPressed(Button.AB, () => {
-    if (beaconSet)
-    if (beacon) {
-        BeaconSender()
-    } else {
-        NormalSender()
-    }
+    if (beaconSet) return;
+
+    if (beacon) BeaconSender();
+    else NormalSender();
+
     beaconSet = true
 })
 
@@ -42,28 +37,41 @@ input.onButtonPressed(Button.B, () => {
 //NormalSender()
 
 //Normal
+function Send(nextCode: number): void { // pičo
+    radio.sendNumber(nextCode);
+    whaleysans.showNumber(nextCode);
+    basic.pause(1000);
+    basic.clearScreen();
+}
 
-function NormalSender () {
-    let codeArchive: codeArchive[] = []
+function NormalSender() {
+    let codeArchive: Data[] = [ngr(7, 1)]
     let nextCode = 7
     let nextGrp = 0
     let receiveGrpEnabled = false
     let jumpNext = false
+    let confirmed = false;
 
     input.onButtonPressed(Button.A, () => {
-        if (beacon) return
-        radio.sendNumber(nextCode)
-        whaleysans.showNumber(nextCode)
-        basic.pause(1000)
-        basic.clearScreen()
+        if (beacon) return;
+        confirmed = false;
+        Send(nextCode);
         /**/
     })
 
     input.onButtonPressed(Button.B, () => {
-        codeArchive.pop()
-        nextCode = codeArchive[codeArchive.length - 1].code
-        nextGrp = codeArchive[codeArchive.length - 1].grp
-        radio.setGroup(nextGrp)
+        if (!confirmed) {
+            basic.showIcon(IconNames.Duck);
+            confirmed = true;
+            return;
+        }
+
+        codeArchive.pop();
+        nextCode = codeArchive[codeArchive.length - 1].code;
+        nextGrp = codeArchive[codeArchive.length - 1].grp;
+
+        radio.setGroup(nextGrp);
+        Send(nextCode);
     })
     /**/
 
@@ -77,39 +85,40 @@ function NormalSender () {
             if (recNum == 0) {
                 basic.showString("W")
             } else {
-                receiveGrpEnabled = true
-                console.logValue("Received value", recStr + " : " + recNum + "\n\r")
-                const remoteID = radio.receivedPacket(RadioPacketProperty.SerialNumber)
-                console.logValue("Remote ID", remoteID + "\n\r")
+                receiveGrpEnabled = true;
+                const remoteID = radio.receivedPacket(RadioPacketProperty.SerialNumber);
                 nextCode = recNum
-                console.logValue("nextCode", nextCode)
                 codeArchive.push({ code: recNum })
                 whaleysans.showNumber(recNum)
+
+                console.logValue("Received value", recStr + " : " + recNum + "\n\r");
+                console.logValue("Remote ID", remoteID + "\n\r");
+                console.logValue("nextCode", nextCode);
             }
 
         } else if (recStr == "grp" && receiveGrpEnabled) {
-            receiveGrpEnabled = false
-            nextGrp = recNum
-            console.logValue("Received grp", recNum + "\n\r")
-            console.logValue("nextGrp", nextGrp)
-            radio.setGroup(nextGrp)
-            codeArchive[codeArchive.length - 1].grp = recNum
-            codeArchive.forEach(code => console.log(code))
+            receiveGrpEnabled = false;
+            nextGrp = recNum;
+            radio.setGroup(nextGrp);
+            codeArchive[codeArchive.length - 1].grp = recNum;
+            codeArchive.forEach(code => console.log(code));
+            console.logValue("Received grp", recNum + "\n\r");
+            console.logValue("nextGrp", nextGrp);
         }
     })
 }
 
 
 //Beacon 
-function BeaconSender () {
-    let groupCodes = [{ code: 7, grp: 1 }, { code: 21, grp: 3 }, { code: 48, grp: 21 }, { code: 89, grp: 14 }]
+function BeaconSender() {
+    const groupCodes = [ngr(7, 1), ngr(21, 3), ngr(48, 21), ngr(89, 14)]
     let currentCode = 0
     console.logValue("Serial number", mySerial + "\n\r")
 
     radio.onReceivedNumber((recNum: number) => {
         if (recNum == groupCodes[currentCode].code) {
             currentCode++
-            if(currentCode == 4) {
+            if (currentCode == groupCodes.length) {
                 radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), 0)
             } else {
                 radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), groupCodes[currentCode].code)
@@ -125,11 +134,9 @@ function BeaconSender () {
     })
 
     basic.forever(function () {
-        basic.pause(400)
-        radio.sendValue(Utility.encodeSerial(randint(10, 9999999999)), 81)
-        radio.sendValue("grp", 99)
-        radio.sendNumber(7)
-
+        basic.pause(500);
+        radio.sendValue(Utility.encodeSerial(randint(10, 9999999999)), 81);
+        radio.sendValue("grp", 99);
+        radio.sendNumber(7);
     })
 }
-
