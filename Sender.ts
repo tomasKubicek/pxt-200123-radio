@@ -29,6 +29,7 @@ function NormalSender() {
             confirmed = true;
             return;
         }
+        confirmed = !true
 
         codeArchive.pop();
         nextCode = codeArchive[codeArchive.length - 1].code;
