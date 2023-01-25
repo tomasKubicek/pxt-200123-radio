@@ -12,7 +12,9 @@ function NormalSender() {
     let codeArchive: Data[] = [nData(7, 1)]
     let nextCode = 7
     let nextGrp = 0
-    let receiveGrpEnabled = false
+    //let receiveGrpEnabled = false
+    let hasNextGrp = false;
+    let hasNextCode = false;
     let jumpNext = false
     let confirmed = false;
 
@@ -50,7 +52,8 @@ function NormalSender() {
             if (recNum == 0) {
                 basic.showString("W")
             } else {
-                receiveGrpEnabled = true;
+                //receiveGrpEnabled = true;
+                hasNextCode = true
                 const remoteID = radio.receivedPacket(RadioPacketProperty.SerialNumber);
                 nextCode = recNum
                 codeArchive.push({ code: recNum })
@@ -60,19 +63,24 @@ function NormalSender() {
                 console.logValue("Remote ID", remoteID + "\n\r");
                 console.logValue("nextCode", nextCode);
             }
+            if (hasNextGrp && hasNextCode) radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;
 
-        } else if (recStr == "grp" && receiveGrpEnabled) {
-            receiveGrpEnabled = false;
+        } else if (recStr == "grp"/* && receiveGrpEnabled*/) {
+            //receiveGrpEnabled = false;
+            hasNextGrp = true
             nextGrp = recNum;
-            radio.setGroup(nextGrp);
+            
             codeArchive[codeArchive.length - 1].grp = recNum;
             codeArchive.forEach(code => console.log(code));
             
             console.logValue("Received grp", recNum + "\n\r");
             console.logValue("nextGrp", nextGrp);
+
+            if (hasNextGrp && hasNextCode) radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;
         }
     })
 }
+
 
 function Send(nextCode: number): void { // pičo
     radio.sendNumber(nextCode);
@@ -88,3 +96,5 @@ function DisplayQuestionMark(){ basic.showLeds(`
             . . # . .
             . . # . .`);
 }
+
+
