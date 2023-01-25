@@ -63,7 +63,7 @@ function NormalSender() {
                 console.logValue("Remote ID", remoteID + "\n\r");
                 console.logValue("nextCode", nextCode);
             }
-            if (hasNextGrp && hasNextCode) radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;
+            if (hasNextGrp && hasNextCode) { radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false; }
 
         } else if (recStr == "grp"/* && receiveGrpEnabled*/) {
             //receiveGrpEnabled = false;
@@ -76,7 +76,7 @@ function NormalSender() {
             console.logValue("Received grp", recNum + "\n\r");
             console.logValue("nextGrp", nextGrp);
 
-            if (hasNextGrp && hasNextCode) radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;
+            if (hasNextGrp && hasNextCode) { radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false; }
         }
     })
 }
