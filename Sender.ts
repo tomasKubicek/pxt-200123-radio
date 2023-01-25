@@ -49,8 +49,11 @@ function NormalSender() {
     radio.onReceivedValue(function (recStr: string, recNum: number) {
         if (beacon) return
         if (recStr == mySerial) {
-            if (recNum == 0) {
+            if (recNum == 1) {
                 basic.showString("W")
+                basic.pause(5000)
+                basic.showNumber(recNum)
+                basic.pause(10000000)
             } else {
                 //receiveGrpEnabled = true;
                 hasNextCode = true
@@ -63,7 +66,7 @@ function NormalSender() {
                 console.logValue("Remote ID", remoteID + "\n\r");
                 console.logValue("nextCode", nextCode);
             }
-            if (hasNextGrp && hasNextCode) radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;
+            if (hasNextGrp && hasNextCode) {radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;}
 
         } else if (recStr == "grp"/* && receiveGrpEnabled*/) {
             //receiveGrpEnabled = false;
@@ -76,7 +79,7 @@ function NormalSender() {
             console.logValue("Received grp", recNum + "\n\r");
             console.logValue("nextGrp", nextGrp);
 
-            if (hasNextGrp && hasNextCode) radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false;
+            if (hasNextGrp && hasNextCode) {radio.setGroup(nextGrp); hasNextCode = false; hasNextGrp = false}
         }
     })
 }

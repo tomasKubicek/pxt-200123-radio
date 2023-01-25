@@ -11,14 +11,13 @@ function BeaconSender() {
     basic.forever(function () {
         basic.pause(500);
         radio.sendValue(Utility.encodeSerial(randint(10, 9999999999)), 81);
-        radio.sendValue("grp", 99);
         radio.sendNumber(7);
     })
 }
 
 function BeaconSend(groupCodes: Data[], currentCode: number) {
     if (currentCode == groupCodes.length) {
-        radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), 0)
+        radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), 1)
     } else {
         radio.sendValue(Utility.encodeSerial(radio.receivedPacket(RadioPacketProperty.SerialNumber)), groupCodes[currentCode].code)
         radio.sendValue("grp", groupCodes[currentCode].grp)
